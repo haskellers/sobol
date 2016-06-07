@@ -71,13 +71,13 @@ data SobolSeq = SobolSeq SobolState
 
 mkSobolSeq :: Int -> [Int] -> SobolSeq
 mkSobolSeq p n = SobolSeq $
-                 SobolState 0 0.0 0 p pD (initialNumbers pD n) where
+                 SobolState 0 0 0 p pD (initialNumbers pD n) where
   pD = getPolynomialDegree p
 
 -- Private functions they will be in a private file
 
 -- SobolState = ( exp, x, idx, poly, polyG, directionalNumbers )
-data SobolState = SobolState Int Float Int Int Int [Int] deriving(Show)
+data SobolState = SobolState Int Int Int Int Int [Int] deriving(Show)
 
 random :: SobolState -> (Float,SobolState)
 random (SobolState exp x idx p pG initN)
@@ -91,31 +91,30 @@ randomStep0 c (SobolState exp x idx p pG initN) =
   (r_x, SobolState n_exp n_x (idx+1) p pG n_initN) where
     n_initN = computeDirectionalNumbers p pG c initN
     n_exp = exp
-    r_x = n_x / (fromIntegral n_exp :: Float)
-    n_x = xN ** xN1 where
+    r_x = (fromIntegral n_x ::Float)  / (fromIntegral $ shiftL (1::Int) n_exp :: Float)
+    n_x = xor xN xN1 where
       xN = x
-      xN1 = (fromIntegral $ n_initN !! (c - 1) :: Float) *
-            (fromIntegral $ shiftL (1::Int) (exp - c) :: Float)
+      xN1 = n_initN !! (c - 1) * (shiftL (1::Int) (exp - c))
 
 randomStep1 :: Int -> SobolState -> (Float,SobolState)
 randomStep1 c (SobolState exp x idx p pG initN) =
   (r_x, SobolState n_exp n_x (idx+1) p pG n_initN) where
     n_initN = computeDirectionalNumbers p pG c initN
     n_exp = c
-    r_x = n_x / (fromIntegral n_exp :: Float  )
-    n_x = xN ** xN1 where
-      xN = x * (fromIntegral $ shiftL (1::Int) (c - exp) :: Float)
-      xN1 = fromIntegral $ n_initN !! (c - 1) :: Float
+    r_x = (fromIntegral n_x :: Float) / (fromIntegral $ shiftL (1::Int) n_exp :: Float)
+    n_x = xor xN xN1 where
+      xN = x * shiftL (1::Int) (c - exp)
+      xN1 = n_initN !! (c - 1)
 
 randomStep2 :: Int -> SobolState -> (Float,SobolState)
 randomStep2 c (SobolState exp x idx p pG initN) =
   (r_x, SobolState n_exp n_x (idx+1) p pG n_initN) where
     n_initN = computeDirectionalNumbers p pG c initN
     n_exp = exp
-    r_x = n_x / (fromIntegral n_exp :: Float  )
-    n_x = xN ** xN1 where
+    r_x = (fromIntegral n_x :: Float) / (fromIntegral $ shiftL (1::Int) n_exp :: Float)
+    n_x = xor xN xN1 where
       xN = x
-      xN1 = fromIntegral $ n_initN !! (c - 1) :: Float
+      xN1 = n_initN !! (c - 1)
 
 
 
@@ -129,7 +128,7 @@ initialNumbers polyDegree initN
     | otherwise = fail "Please, provice enough initial numbers"
 
 computeDirectionalNumbers :: Int -> Int -> Int -> [Int] -> [Int]
-computeDirectionalNumbers 0 _ idx _ = take (idx - 1) [1,1..]
+computeDirectionalNumbers 0 _ idx _ = take idx [1,1..]
 computeDirectionalNumbers p pG idx initN
   | (idx - 1) < q = initN
   | otherwise = computeDirectionalNumbers p pG idx $ initN ++  [computeDirectionalNumber p pG newInit] where
