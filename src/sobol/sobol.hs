@@ -63,32 +63,39 @@
 
 module Sobol
   (
+  SobolSeq,
+  random,
+  mkSobolSeq
   ) where
 
 import Data.Bits
 
-data SobolSeq = SobolSeq SobolState
+data SobolSeq = SobolSeq SobolState deriving(Show)
 
 mkSobolSeq :: Int -> [Int] -> SobolSeq
 mkSobolSeq p n = SobolSeq $
                  SobolState 0 0 0 p pD (initialNumbers pD n) where
   pD = getPolynomialDegree p
 
--- Private functions they will be in a private file
-
--- SobolState = ( exp, x, idx, poly, polyG, directionalNumbers )
-data SobolState = SobolState Int Int Int Int Int [Int] deriving(Show)
-
-random :: SobolState -> (Float,SobolState)
-random (SobolState exp x idx p pG initN)
+random :: SobolSeq -> (Float,SobolSeq)
+random (SobolSeq (SobolState exp x idx p pG initN))
   | exp > c = randomStep0 c (SobolState exp x idx p pG initN)
   | exp < c = randomStep1 c (SobolState exp x idx p pG initN)
   | otherwise = randomStep2 c (SobolState exp x idx p pG initN) where
     c = getFirstZero idx
 
-randomStep0 :: Int -> SobolState -> (Float,SobolState)
+-----------------------------------------------------------------------------
+-- Private functions
+-----------------------------------------------------------------------------
+
+-- SobolState = ( exp, x, idx, poly, polyG, directionalNumbers )
+data SobolState = SobolState Int Int Int Int Int [Int]
+  deriving (Show,Eq)
+
+-- These three methods are which generates the random sequences
+randomStep0 :: Int -> SobolState -> (Float,SobolSeq)
 randomStep0 c (SobolState exp x idx p pG initN) =
-  (r_x, SobolState n_exp n_x (idx+1) p pG n_initN) where
+  (r_x, SobolSeq $ SobolState n_exp n_x (idx+1) p pG n_initN) where
     n_initN = computeDirectionalNumbers p pG c initN
     n_exp = exp
     r_x = (fromIntegral n_x ::Float)  / (fromIntegral $ shiftL (1::Int) n_exp :: Float)
@@ -96,9 +103,9 @@ randomStep0 c (SobolState exp x idx p pG initN) =
       xN = x
       xN1 = n_initN !! (c - 1) * (shiftL (1::Int) (exp - c))
 
-randomStep1 :: Int -> SobolState -> (Float,SobolState)
+randomStep1 :: Int -> SobolState -> (Float,SobolSeq)
 randomStep1 c (SobolState exp x idx p pG initN) =
-  (r_x, SobolState n_exp n_x (idx+1) p pG n_initN) where
+  (r_x, SobolSeq $ SobolState n_exp n_x (idx+1) p pG n_initN) where
     n_initN = computeDirectionalNumbers p pG c initN
     n_exp = c
     r_x = (fromIntegral n_x :: Float) / (fromIntegral $ shiftL (1::Int) n_exp :: Float)
@@ -106,9 +113,9 @@ randomStep1 c (SobolState exp x idx p pG initN) =
       xN = x * shiftL (1::Int) (c - exp)
       xN1 = n_initN !! (c - 1)
 
-randomStep2 :: Int -> SobolState -> (Float,SobolState)
+randomStep2 :: Int -> SobolState -> (Float,SobolSeq)
 randomStep2 c (SobolState exp x idx p pG initN) =
-  (r_x, SobolState n_exp n_x (idx+1) p pG n_initN) where
+  (r_x, SobolSeq $ SobolState n_exp n_x (idx+1) p pG n_initN) where
     n_initN = computeDirectionalNumbers p pG c initN
     n_exp = exp
     r_x = (fromIntegral n_x :: Float) / (fromIntegral $ shiftL (1::Int) n_exp :: Float)
@@ -116,8 +123,10 @@ randomStep2 c (SobolState exp x idx p pG initN) =
       xN = x
       xN1 = n_initN !! (c - 1)
 
-
-
+-- Check and return a inital numbers for a polynomial of
+-- polyDegree.
+-- The properties that must satisfies are specified on
+-- the head of the file.
 initialNumbers :: Int -> [Int] -> [Int]
 initialNumbers 1 _ = [1]
 initialNumbers polyDegree initN
@@ -127,6 +136,9 @@ initialNumbers polyDegree initN
     | length initN >= polyDegree = take polyDegree initN
     | otherwise = fail "Please, provice enough initial numbers"
 
+-- Generate the list of size idx of the directional numbers
+-- for the polynomial p and the initial numbers init
+-- take pG initN
 computeDirectionalNumbers :: Int -> Int -> Int -> [Int] -> [Int]
 computeDirectionalNumbers 0 _ idx _ = take idx [1,1..]
 computeDirectionalNumbers p pG idx initN
