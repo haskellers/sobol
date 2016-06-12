@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 -----------------------------------------------------------------------------
 --
 -- Module      :  Sobol
@@ -68,7 +69,9 @@ module Sobol
   mkSobolSeq
   ) where
 
+import Data.List.Split
 import Data.Bits
+import Data.FileEmbed
 
 data SobolSeq = SobolSeq SobolState deriving(Show)
 
@@ -91,6 +94,11 @@ random (SobolSeq (SobolState exp x idx p pG initN))
 -- SobolState = ( exp, x, idx, poly, polyG, directionalNumbers )
 data SobolState = SobolState Int Int Int Int Int [Int]
   deriving (Show,Eq)
+
+-- Polynomias
+getPolynomials = parse $ (map (splitOn ",") . (splitOn "\n") $ ($(embedStringFile "../../data/polynomials.txt") :: String) ) where
+  parse = (map $ (map (read :: [Char] -> Int) ))
+
 
 -- These three methods are which generates the random sequences
 randomStep0 :: Int -> SobolState -> (Float,SobolSeq)
