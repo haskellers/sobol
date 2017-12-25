@@ -72,6 +72,7 @@ module Sobol
 import Data.List.Split
 import Data.Bits
 import Data.FileEmbed
+import Paths_sobol
 
 data SobolSeq = SobolSeq SobolState deriving(Show)
 
@@ -96,7 +97,8 @@ data SobolState = SobolState Int Int Int Int Int [Int]
   deriving (Show,Eq)
 
 -- Polynomias
-getPolynomials = parse $ (map (splitOn ",") . (splitOn "\n") $ ($(embedStringFile "../../data/polynomials.txt") :: String) ) where
+readFile getDataFileName "polynomials.txt"
+getPolynomials = parse $ (map (splitOn ",") . (splitOn "\n") $ ($(embedStringFile $ getDataFileName "polynomials.txt") :: String) ) where
   parse = (map $ (map (read :: [Char] -> Int) ))
 
 

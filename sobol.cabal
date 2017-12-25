@@ -4,21 +4,22 @@
 name:                sobol
 version:             0.0.1
 synopsis:            Sobol Sequence Generator
--- description:         
+-- description:
 license:             BSD3
 license-file:        LICENSE
-author:              Carlos Duelo
-maintainer:          c@cdprf.me
--- copyright:           
+author:              Carlos Duelo <c@cdprf.me>
+maintainer:          Carlos Duelo <c@cdprf.me>
+-- copyright:
 category:            Math, System
 build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
+data-dir: data
 
 library
-  -- exposed-modules:     
-  -- other-modules:       
-  -- other-extensions:    
-  build-depends:       base >=4.8 && <4.9
+  exposed-modules:     Sobol
+  build-depends:       base >=4.8 && <5
+                       , file-embed
+                       , split
   hs-source-dirs:      src
   default-language:    Haskell2010
